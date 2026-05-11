@@ -45,4 +45,10 @@
 
 #define GIROUETTE_PIN  33
 
+// =======================
+// CAPTEUR PLUIE
+// =======================
+
+#define RAIN_PIN       27
+
 #endif

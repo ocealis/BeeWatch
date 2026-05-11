@@ -8,6 +8,8 @@
 
 #include "sensors/weather/sht31_sensor.h"
 
+#include "sensors/weather/rain_gauge.h"
+
 #include "sensors/wind/anemometer.h"
 
 #include "sensors/wind/wind_vane.h"
@@ -27,6 +29,8 @@ void setup() {
     initBME280();
 
     initSHT31();
+
+    initRainGauge();
 
     initAnemometer();
 
