@@ -1,6 +1,12 @@
 #include <Arduino.h>
 
+#include <Wire.h>
+
 #include "core/console.h"
+
+#include "sensors/weather/bme280_sensor.h"
+
+#include "sensors/weather/sht31_sensor.h"
 
 #include "sensors/wind/anemometer.h"
 
@@ -16,7 +22,15 @@ void setup() {
 
     consoleHeader();
 
+    Wire.begin();
+
+    initBME280();
+
+    initSHT31();
+
     initAnemometer();
+
+    initWindVane();
 
     initLoRa();
 }

@@ -26,7 +26,19 @@
 #define SPI_MOSI   23
 
 // =======================
-// CAPTEURS
+// I2C - BME280 + SHT31
+// =======================
+
+#define I2C_SDA    21
+
+#define I2C_SCL    22
+
+#define BME280_ADDRESS  0x76
+
+#define SHT31_ADDRESS   0x44
+
+// =======================
+// CAPTEURS VENT
 // =======================
 
 #define ANEMO_PIN      32

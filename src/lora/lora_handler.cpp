@@ -8,6 +8,8 @@
 
 #include "lora/lora_handler.h"
 
+#include "lora/payload.h"
+
 #include "config/pins.h"
 
 #include "config/constants.h"
@@ -143,19 +145,19 @@ void envoyerDonnees() {
             tempsSecondes
         );
 
-        if (
-    vitesseVentKmh >=
-    ALERTE_VENT_KMH
-) {
+    if (
+        vitesseVentKmh >=
+        ALERTE_VENT_KMH
+    ) {
 
-    alerteVent = true;
+        alerteVent = true;
 
-    demandeEnvoiImmediate = true;
+        demandeEnvoiImmediate = true;
 
-    consoleWarn(
-        "ALERTE VENT VIOLENT"
-    );
-}
+        consoleWarn(
+            "ALERTE VENT VIOLENT"
+        );
+    }
 
     uint8_t directionIndex =
         lireDirectionIndex();
@@ -170,8 +172,9 @@ void envoyerDonnees() {
     uint16_t ventX10 =
         vitesseVentKmh * 10;
 
-    byte payload[5];
+    byte payload[15];
 
+    // Vent
     payload[0] =
         highByte(ventX10);
 
@@ -186,6 +189,11 @@ void envoyerDonnees() {
 
     payload[4] =
         lowByte(directionDeg);
+
+    // BME280 + SHT31
+    buildPayload(
+        payload + 5
+    );
 
     LMIC_setTxData2(
         1,

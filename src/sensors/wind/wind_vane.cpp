@@ -43,6 +43,22 @@ const char* textesGirouette[8] = {
 };
 
 // =================================================
+// INITIALISATION
+// =================================================
+
+void initWindVane() {
+
+    pinMode(
+        GIROUETTE_PIN,
+        INPUT
+    );
+
+    Serial.println(
+        "[GIROUETTE] OK"
+    );
+}
+
+// =================================================
 // LECTURE DIRECTION
 // =================================================
 
