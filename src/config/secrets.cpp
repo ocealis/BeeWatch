@@ -1,0 +1,39 @@
+#include "config/secrets.h"
+// =======================
+// IDENTIFIANTS TTN OTAA
+// =======================
+
+const u1_t PROGMEM APPEUI[8] = {
+
+    0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00
+};
+
+const u1_t PROGMEM DEVEUI[8] = {
+
+    0xEC, 0x62, 0x60, 0x84,
+    0xDC, 0xDC, 0x00, 0x00
+};
+
+const u1_t PROGMEM APPKEY[16] = {
+
+    0x10, 0x54, 0x2C, 0x99,
+    0x7E, 0xF0, 0x1B, 0x83,
+    0x93, 0x50, 0xFE, 0x58,
+    0x83, 0x9B, 0x66, 0x17
+};
+
+void os_getArtEui(u1_t* buf) {
+
+    memcpy_P(buf, APPEUI, 8);
+}
+
+void os_getDevEui(u1_t* buf) {
+
+    memcpy_P(buf, DEVEUI, 8);
+}
+
+void os_getDevKey(u1_t* buf) {
+
+    memcpy_P(buf, APPKEY, 16);
+}
