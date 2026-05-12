@@ -18,7 +18,7 @@
 
 #include "sensors/i2c/pcf8574.h"
 
-#include "HivePayload.h"
+#include "models/HivePayload.h"
 
 #define PCF8574_ADDR 0x20 // Adresse I2C du module PCF8574
 
@@ -63,9 +63,11 @@ void loop() {
 
     delay(1000);
 
+    uint8_t payloadData[10];
+
     HivePayload payload;
 
-    payload.buildPayload();
+    payload.buildPayload(payloadData);
 
     Serial.println(F("Payload construit."));
 }

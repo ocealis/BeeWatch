@@ -1,4 +1,4 @@
-#include "HivePayload.h"
+#include "models/HivePayload.h"
 
 HivePayload::HivePayload() {
     // Constructeur par défaut

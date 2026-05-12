@@ -6,6 +6,8 @@
 
 #include "config/pins.h"
 
+#define BME280_ADDRESS 0x76
+
 Adafruit_BME280 bme;
 
 bool bmeFound = false;

@@ -33,7 +33,7 @@
 
 #define I2C_SCL    22
 
-#define BME280_ADDRESS  0x76
+#undef BME280_ADDRESS
 
 #define SHT31_ADDRESS   0x44
 
