@@ -87,6 +87,22 @@ void onEvent(ev_t ev) {
                 "Transmission terminée"
             );
 
+            Serial.print(
+                "TXRX Flags = "
+            );
+
+            Serial.println(
+                LMIC.txrxFlags
+            );
+
+            Serial.print(
+                "DataLen = "
+            );
+
+            Serial.println(
+                LMIC.dataLen
+            );
+
             break;
 
         default:
@@ -145,6 +161,12 @@ void envoyerDonnees() {
             tempsSecondes
         );
 
+    // =======================
+    // ALERTES
+    // =======================
+
+    alerteVent = false;
+
     if (
         vitesseVentKmh >=
         ALERTE_VENT_KMH
@@ -159,6 +181,10 @@ void envoyerDonnees() {
         );
     }
 
+    // =======================
+    // GIROUETTE
+    // =======================
+
     uint8_t directionIndex =
         lireDirectionIndex();
 
@@ -172,9 +198,14 @@ void envoyerDonnees() {
     uint16_t ventX10 =
         vitesseVentKmh * 10;
 
-    byte payload[15];
+    byte payload[
+        5 + WEATHER_PAYLOAD_SIZE
+    ];
 
-    // Vent
+    // =======================
+    // VENT
+    // =======================
+
     payload[0] =
         highByte(ventX10);
 
@@ -190,10 +221,17 @@ void envoyerDonnees() {
     payload[4] =
         lowByte(directionDeg);
 
-    // BME280 + SHT31
+    // =======================
+    // MÉTÉO
+    // =======================
+
     buildPayload(
         payload + 5
     );
+
+    // =======================
+    // ENVOI TTN
+    // =======================
 
     LMIC_setTxData2(
         1,
@@ -203,7 +241,7 @@ void envoyerDonnees() {
     );
 
     consoleOk(
-        "Payload envoyé"
+        "Payload mis en attente de transmission"
     );
 }
 
@@ -268,6 +306,10 @@ void loopLoRa() {
 
         if (!(LMIC.opmode &
             OP_TXRXPEND)) {
+
+            consoleInfo(
+                "Nouvel envoi périodique"
+            );
 
             envoyerDonnees();
 
