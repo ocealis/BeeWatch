@@ -6,7 +6,7 @@
 struct WeatherData {
 
     // =======================
-    // BME280
+    // METEO
     // =======================
 
     float temperature;
@@ -14,14 +14,6 @@ struct WeatherData {
     float humidity;
 
     float pressure;
-
-    // =======================
-    // SHT31
-    // =======================
-
-    float shtTemperature;
-
-    float shtHumidity;
 
     // =======================
     // VENT

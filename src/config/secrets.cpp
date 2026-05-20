@@ -1,7 +1,4 @@
 #include "config/secrets.h"
-// =======================
-// IDENTIFIANTS TTN OTAA
-// =======================
 
 const u1_t PROGMEM APPEUI[8] = {
 

@@ -3,28 +3,26 @@
 #include <SPI.h>
 
 #include <lmic.h>
-
 #include <hal/hal.h>
 
-#include "lora/lora_handler.h"
-
-#include "lora/payload.h"
-
 #include "config/pins.h"
-
-#include "config/constants.h"
+#include "config/secrets.h"
+#include "config/config.h"
 
 #include "core/console.h"
 
-#include "core/globals.h"
+#include "lora/lora_handler.h"
+#include "lora/payload.h"
 
-#include "sensors/wind/anemometer.h"
+// =======================
+// ETAT TTN
+// =======================
 
-#include "sensors/wind/wind_vane.h"
+static bool joined = false;
 
-// =================================================
-// LMIC PINMAP
-// =================================================
+// =======================
+// LMIC PINS
+// =======================
 
 const lmic_pinmap lmic_pins = {
 
@@ -41,280 +39,113 @@ const lmic_pinmap lmic_pins = {
     }
 };
 
-// =================================================
+// =======================
 // EVENTS LMIC
-// =================================================
+// =======================
 
 void onEvent(ev_t ev) {
 
-    Serial.print("[LMIC ");
-    Serial.print(os_getTime());
-    Serial.print("] ");
-
-    switch (ev) {
+    switch(ev) {
 
         case EV_JOINING:
 
-            consoleInfo(
-                "Connexion OTAA vers TTN..."
-            );
-
+            consoleInfo("TTN JOIN...");
             break;
 
         case EV_JOINED:
 
-            consoleOk(
-                "Connexion TTN réussie"
-            );
+            consoleOk("TTN CONNECTE");
 
-            LMIC_setLinkCheckMode(0);
-
-            lastSendMillis = millis();
+            joined = true;
 
             break;
 
-        case EV_TXSTART:
+        case EV_JOIN_FAILED:
 
-            consoleInfo(
-                "Début transmission radio"
-            );
+            consoleWarn("TTN JOIN FAILED");
+
+            joined = false;
 
             break;
 
         case EV_TXCOMPLETE:
 
-            consoleOk(
-                "Transmission terminée"
-            );
-
-            Serial.print(
-                "TXRX Flags = "
-            );
-
-            Serial.println(
-                LMIC.txrxFlags
-            );
-
-            Serial.print(
-                "DataLen = "
-            );
-
-            Serial.println(
-                LMIC.dataLen
-            );
+            consoleInfo("Payload envoye");
 
             break;
 
         default:
-
-            Serial.print(
-                "Événement LMIC : "
-            );
-
-            Serial.println((unsigned) ev);
-
             break;
     }
 }
 
-// =================================================
-// ENVOI DONNÉES
-// =================================================
-
-void envoyerDonnees() {
-
-    if (LMIC.opmode & OP_TXRXPEND) {
-
-        consoleWarn(
-            "Transmission déjà en cours"
-        );
-
-        return;
-    }
-
-    noInterrupts();
-
-    uint32_t impulsions =
-        impulsionsVent;
-
-    impulsionsVent = 0;
-
-    interrupts();
-
-    unsigned long now = millis();
-
-    float tempsSecondes =
-        (now - lastSendMillis)
-        / 1000.0;
-
-    lastSendMillis = now;
-
-    if (tempsSecondes <= 0) {
-
-        tempsSecondes =
-            TX_INTERVAL;
-    }
-
-    float vitesseVentKmh =
-        calculerVitesseVent(
-            impulsions,
-            tempsSecondes
-        );
-
-    // =======================
-    // ALERTES
-    // =======================
-
-    alerteVent = false;
-
-    if (
-        vitesseVentKmh >=
-        ALERTE_VENT_KMH
-    ) {
-
-        alerteVent = true;
-
-        demandeEnvoiImmediate = true;
-
-        consoleWarn(
-            "ALERTE VENT VIOLENT"
-        );
-    }
-
-    // =======================
-    // GIROUETTE
-    // =======================
-
-    uint8_t directionIndex =
-        lireDirectionIndex();
-
-    uint16_t directionDeg =
-        lireDirectionDegres();
-
-    // =======================
-    // PAYLOAD
-    // =======================
-
-    uint16_t ventX10 =
-        vitesseVentKmh * 10;
-
-    byte payload[
-        5 + WEATHER_PAYLOAD_SIZE
-    ];
-
-    // =======================
-    // VENT
-    // =======================
-
-    payload[0] =
-        highByte(ventX10);
-
-    payload[1] =
-        lowByte(ventX10);
-
-    payload[2] =
-        directionIndex;
-
-    payload[3] =
-        highByte(directionDeg);
-
-    payload[4] =
-        lowByte(directionDeg);
-
-    // =======================
-    // MÉTÉO
-    // =======================
-
-    buildPayload(
-        payload + 5
-    );
-
-    // =======================
-    // ENVOI TTN
-    // =======================
-
-    LMIC_setTxData2(
-        1,
-        payload,
-        sizeof(payload),
-        0
-    );
-
-    consoleOk(
-        "Payload mis en attente de transmission"
-    );
-}
-
-// =================================================
-// INITIALISATION LORA
-// =================================================
+// =======================
+// INIT LORA
+// =======================
 
 void initLoRa() {
-
-    consoleSection(
-        "INITIALISATION LoRaWAN"
-    );
 
     SPI.begin(
         SPI_SCK,
         SPI_MISO,
-        SPI_MOSI,
-        LORA_NSS
+        SPI_MOSI
     );
 
     os_init();
 
     LMIC_reset();
 
-    LMIC_setClockError(
-        MAX_CLOCK_ERROR * 10 / 100
-    );
-
-    lastSendMillis = millis();
-
-    consoleInfo(
-        "Démarrage procédure OTAA"
-    );
-
     LMIC_startJoining();
+
+    consoleOk("LoRa initialise");
 }
 
-// =================================================
-// LOOP LORA
-// =================================================
+// =======================
+// LOOP LMIC
+// =======================
 
 void loopLoRa() {
 
     os_runloop_once();
+}
 
-    static unsigned long dernierEssai = 0;
+// =======================
+// ETAT JOIN
+// =======================
 
-    bool envoiPeriodique =
+bool isLoRaJoined() {
 
-        millis() - dernierEssai >=
-        TX_INTERVAL * 1000UL;
+    return joined;
+}
 
-    if (
-        LMIC.devaddr != 0 &&
-        (
-            envoiPeriodique ||
-            demandeEnvoiImmediate
-        )
-    ) {
+// =======================
+// ENVOI DONNEES
+// =======================
 
-        dernierEssai = millis();
+void envoyerDonnees() {
 
-        if (!(LMIC.opmode &
-            OP_TXRXPEND)) {
+    if (!joined) {
 
-            consoleInfo(
-                "Nouvel envoi périodique"
-            );
-
-            envoyerDonnees();
-
-            demandeEnvoiImmediate =
-                false;
-        }
+        consoleWarn("TTN non connecte");
+        return;
     }
+
+    if (LMIC.opmode & OP_TXRXPEND) {
+
+        consoleWarn("LoRa occupe");
+        return;
+    }
+
+    uint8_t payload[WEATHER_PAYLOAD_SIZE];
+
+    buildPayload(payload);
+
+    LMIC_setTxData2(
+        LORA_PORT,
+        payload,
+        WEATHER_PAYLOAD_SIZE,
+        0
+    );
+
+    consoleInfo("Payload queue");
 }

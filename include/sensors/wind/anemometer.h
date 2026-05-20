@@ -3,9 +3,6 @@
 
 void initAnemometer();
 
-float calculerVitesseVent(
-    uint32_t impulsions,
-    float tempsSecondes
-);
+float getWindSpeed();
 
 #endif

@@ -3,17 +3,11 @@
 
 #include <Arduino.h>
 
-// =======================
-// VENT
-// =======================
-
 extern volatile uint32_t impulsionsVent;
 
-extern unsigned long lastSendMillis;
+extern volatile uint32_t rainTips;
 
-// =======================
-// ALERTES
-// =======================
+extern unsigned long lastSendMillis;
 
 extern bool alerteVent;
 

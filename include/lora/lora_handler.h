@@ -1,10 +1,27 @@
-#ifndef LORA_HANDLER_H
-#define LORA_HANDLER_H
+#pragma once
+
+#include <Arduino.h>
+
+// =======================
+// INITIALISATION LORA
+// =======================
 
 void initLoRa();
 
+// =======================
+// BOUCLE LMIC
+// =======================
+
 void loopLoRa();
+
+// =======================
+// ENVOI DONNEES
+// =======================
 
 void envoyerDonnees();
 
-#endif
+// =======================
+// ETAT TTN
+// =======================
+
+bool isLoRaJoined();

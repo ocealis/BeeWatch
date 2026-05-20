@@ -1,63 +1,44 @@
-#include "sensors/weather/bme280_sensor.h"
-
 #include <Wire.h>
 
+#include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 
 #include "config/pins.h"
 
-#define BME280_ADDRESS 0x76
+#include "core/console.h"
 
 Adafruit_BME280 bme;
 
-bool bmeFound = false;
-
 bool initBME280() {
 
-    bmeFound = bme.begin(
-        BME280_ADDRESS
+    Wire.begin(
+        I2C_SDA,
+        I2C_SCL
     );
 
-    if (bmeFound) {
+    if (!bme.begin(0x76)) {
 
-        Serial.println(
-            "[BME280] OK"
-        );
+        consoleWarn("BME280 absent");
 
-    } else {
-
-        Serial.println(
-            "[BME280] NOT FOUND"
-        );
+        return false;
     }
 
-    return bmeFound;
+    consoleOk("BME280 detecte");
+
+    return true;
 }
 
 float getBME280Temperature() {
-
-    if (!bmeFound) {
-        return 0;
-    }
 
     return bme.readTemperature();
 }
 
 float getBME280Humidity() {
 
-    if (!bmeFound) {
-        return 0;
-    }
-
     return bme.readHumidity();
 }
 
 float getBME280Pressure() {
 
-    if (!bmeFound) {
-        return 0;
-    }
-
-    return bme.readPressure()
-           / 100.0F;
+    return bme.readPressure() / 100.0F;
 }

@@ -1,59 +1,49 @@
 #include <Arduino.h>
 
 #include "config/pins.h"
-
 #include "config/constants.h"
-
 #include "core/globals.h"
 
-volatile unsigned long lastPulseUs = 0;
+volatile unsigned long lastWindInterrupt = 0;
 
-// =================================================
-// INTERRUPTION ANÉMOMÈTRE
-// =================================================
-
-void IRAM_ATTR compterImpulsionVent() {
+void IRAM_ATTR onWindPulse() {
 
     unsigned long now = micros();
 
-    if (now - lastPulseUs >= debounceUs) {
+    if (now - lastWindInterrupt > debounceWindUs) {
 
         impulsionsVent++;
 
-        lastPulseUs = now;
+        lastWindInterrupt = now;
     }
 }
 
-// =================================================
-// INITIALISATION
-// =================================================
-
 void initAnemometer() {
 
-    pinMode(
-        ANEMO_PIN,
-        INPUT_PULLUP
-    );
+    pinMode(ANEMO_PIN, INPUT_PULLUP);
 
     attachInterrupt(
         digitalPinToInterrupt(ANEMO_PIN),
-        compterImpulsionVent,
+        onWindPulse,
         FALLING
     );
 }
 
-// =================================================
-// CALCUL VITESSE
-// =================================================
+float getWindSpeed() {
 
-float calculerVitesseVent(
-    uint32_t impulsions,
-    float tempsSecondes
-) {
+    static uint32_t oldImpulsions = 0;
 
-    float frequenceHz =
-        impulsions / tempsSecondes;
+    uint32_t current;
 
-    return frequenceHz *
-           FACTEUR_ANEMO;
+    noInterrupts();
+
+    current = impulsionsVent;
+
+    interrupts();
+
+    uint32_t diff = current - oldImpulsions;
+
+    oldImpulsions = current;
+
+    return diff * FACTEUR_ANEMO;
 }

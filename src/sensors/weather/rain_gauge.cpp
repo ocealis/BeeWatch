@@ -1,50 +1,37 @@
-#include "sensors/weather/rain_gauge.h"
-
 #include <Arduino.h>
 
 #include "config/pins.h"
+#include "config/constants.h"
+#include "core/globals.h"
 
-volatile uint32_t rainTips = 0;
+volatile unsigned long lastRainInterrupt = 0;
 
-// =======================
-// INTERRUPTION
-// =======================
+const float MM_PER_TIP = 0.2794;
 
 void IRAM_ATTR onRainTip() {
 
-    rainTips++;
-}
+    unsigned long now = micros();
 
-// =======================
-// INITIALISATION
-// =======================
+    if (now - lastRainInterrupt > debounceRainUs) {
+
+        rainTips++;
+
+        lastRainInterrupt = now;
+    }
+}
 
 void initRainGauge() {
 
-    pinMode(
-        RAIN_PIN,
-        INPUT_PULLUP
-    );
+    pinMode(RAIN_PIN, INPUT_PULLUP);
 
     attachInterrupt(
-        digitalPinToInterrupt(
-            RAIN_PIN
-        ),
+        digitalPinToInterrupt(RAIN_PIN),
         onRainTip,
         FALLING
     );
-
-    Serial.println(
-        "[RAIN] OK"
-    );
 }
 
-// =======================
-// PLUIE MM
-// =======================
+float getRainMM() {
 
-float getRainMm() {
-
-    // 1 basculement = 0.2794 mm
-    return rainTips * 0.2794;
-}   
+    return rainTips * MM_PER_TIP;
+}

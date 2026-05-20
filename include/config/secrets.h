@@ -2,7 +2,6 @@
 #define SECRETS_H
 
 #include <Arduino.h>
-
 #include <lmic.h>
 
 extern const u1_t APPEUI[8];

@@ -2,11 +2,9 @@
 
 #include "config/pins.h"
 
-// =================================================
-// GIROUETTE
-// =================================================
+#include "sensors/wind/wind_vane.h"
 
-int adcGirouette[8] = {
+int adcValues[8] = {
 
     200,
     600,
@@ -18,94 +16,25 @@ int adcGirouette[8] = {
     3400
 };
 
-uint16_t degresGirouette[8] = {
+uint8_t getWindDirection() {
 
-    0,
-    45,
-    90,
-    135,
-    180,
-    225,
-    270,
-    315
-};
+    int value = analogRead(GIROUETTE_PIN);
 
-const char* textesGirouette[8] = {
+    int bestIndex = 0;
 
-    "Nord",
-    "Nord-Est",
-    "Est",
-    "Sud-Est",
-    "Sud",
-    "Sud-Ouest",
-    "Ouest",
-    "Nord-Ouest"
-};
+    int smallest = 5000;
 
-// =================================================
-// INITIALISATION
-// =================================================
+    for (int i = 0; i < 8; i++) {
 
-void initWindVane() {
+        int delta = abs(value - adcValues[i]);
 
-    pinMode(
-        GIROUETTE_PIN,
-        INPUT
-    );
+        if (delta < smallest) {
 
-    Serial.println(
-        "[GIROUETTE] OK"
-    );
-}
+            smallest = delta;
 
-// =================================================
-// LECTURE DIRECTION
-// =================================================
-
-uint8_t lireDirectionIndex() {
-
-    int valeur =
-        analogRead(GIROUETTE_PIN);
-
-    int meilleurIndex = 0;
-
-    int plusPetitEcart =
-        abs(valeur - adcGirouette[0]);
-
-    for (int i = 1; i < 8; i++) {
-
-        int ecart =
-            abs(valeur - adcGirouette[i]);
-
-        if (ecart < plusPetitEcart) {
-
-            plusPetitEcart = ecart;
-
-            meilleurIndex = i;
+            bestIndex = i;
         }
     }
 
-    return meilleurIndex;
-}
-
-// =================================================
-// DEGRÉS
-// =================================================
-
-uint16_t lireDirectionDegres() {
-
-    return degresGirouette[
-        lireDirectionIndex()
-    ];
-}
-
-// =================================================
-// TEXTE
-// =================================================
-
-const char* lireDirectionTexte() {
-
-    return textesGirouette[
-        lireDirectionIndex()
-    ];
+    return bestIndex;
 }

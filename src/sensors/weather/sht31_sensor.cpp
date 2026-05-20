@@ -1,52 +1,32 @@
-#include "sensors/weather/sht31_sensor.h"
-
 #include <Wire.h>
-
 #include <Adafruit_SHT31.h>
 
 #include "config/pins.h"
+#include "core/console.h"
 
-Adafruit_SHT31 sht31 =
-    Adafruit_SHT31();
-
-bool shtFound = false;
+Adafruit_SHT31 sht31;
 
 bool initSHT31() {
 
-    shtFound = sht31.begin(
-        SHT31_ADDRESS
-    );
+    Wire.begin(I2C_SDA, I2C_SCL);
 
-    if (shtFound) {
+    if (!sht31.begin(SHT31_ADDRESS)) {
 
-        Serial.println(
-            "[SHT31] OK"
-        );
-
-    } else {
-
-        Serial.println(
-            "[SHT31] NOT FOUND"
-        );
+        consoleWarn("SHT31 absent");
+        return false;
     }
 
-    return shtFound;
+    consoleOk("SHT31 detecte");
+
+    return true;
 }
 
 float getSHT31Temperature() {
-
-    if (!shtFound) {
-        return 0;
-    }
 
     return sht31.readTemperature();
 }
 
 float getSHT31Humidity() {
-
-    if (!shtFound) {
-        return 0;
-    }
 
     return sht31.readHumidity();
 }

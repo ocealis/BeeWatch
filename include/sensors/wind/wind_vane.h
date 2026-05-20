@@ -3,12 +3,6 @@
 
 #include <Arduino.h>
 
-void initWindVane();
-
-uint8_t lireDirectionIndex();
-
-uint16_t lireDirectionDegres();
-
-const char* lireDirectionTexte();
+uint8_t getWindDirection();
 
 #endif

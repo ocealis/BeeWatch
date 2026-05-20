@@ -1,16 +1,10 @@
 #include "core/globals.h"
 
-// =======================
-// VENT
-// =======================
-
 volatile uint32_t impulsionsVent = 0;
 
-unsigned long lastSendMillis = 0;
+volatile uint32_t rainTips = 0;
 
-// =======================
-// ALERTES
-// =======================
+unsigned long lastSendMillis = 0;
 
 bool alerteVent = false;
 

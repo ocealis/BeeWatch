@@ -1,248 +1,201 @@
 #include <Arduino.h>
 
-#include <Wire.h>
+#include "config/constants.h"
+#include "config/config.h"
 
 #include "core/console.h"
+#include "core/globals.h"
+
+#include "models/weather_data.h"
 
 #include "sensors/weather/bme280_sensor.h"
-
 #include "sensors/weather/sht31_sensor.h"
-
 #include "sensors/weather/rain_gauge.h"
 
 #include "sensors/wind/anemometer.h"
-
 #include "sensors/wind/wind_vane.h"
 
 #include "lora/lora_handler.h"
 
-#include "sensors/i2c/pcf8574.h"
+// =======================
+// DONNEES METEO
+// =======================
 
-#include "models/HivePayload.h"
+WeatherData meteo;
 
-#define PCF8574_ADDR 0x20
-
-// =================================================
-// SCAN I2C
-// =================================================
-
-void scanI2C() {
-
-    Serial.println(
-        "Scanning I2C bus..."
-    );
-
-    for (
-        uint8_t addr = 1;
-        addr < 127;
-        addr++
-    ) {
-
-        Wire.beginTransmission(addr);
-
-        if (
-            Wire.endTransmission() == 0
-        ) {
-
-            Serial.print(
-                "Found I2C device at address 0x"
-            );
-
-            Serial.println(
-                addr,
-                HEX
-            );
-        }
-    }
-
-    Serial.println(
-        "Scan complete."
-    );
-}
-
-// =================================================
+// =======================
 // SETUP
-// =================================================
+// =======================
 
 void setup() {
 
     Serial.begin(115200);
 
-    delay(2000);
+    delay(1000);
 
     consoleHeader();
 
-    // =======================
-    // I2C
-    // =======================
+    consoleSection("CAPTEURS");
 
-    Wire.begin();
+    #if USE_BME280
+        initBME280();
+    #endif
 
-    Wire.setClock(100000);
+    #if USE_SHT31
+        initSHT31();
+    #endif
 
-    scanI2C();
-
-    // =======================
-    // CAPTEURS
-    // =======================
-
-    // initBME280();
-
-    initSHT31();
-
-    initRainGauge();
+    #if USE_RAIN_GAUGE
+        initRainGauge();
+    #endif
 
     initAnemometer();
 
-    initWindVane();
+    consoleOk("Capteurs initialises");
 
-    // =======================
-    // PCF8574
-    // =======================
-
-    Serial.println(
-        F("Initialisation du PCF8574...")
-    );
-
-    if (
-        !initPCF8574(
-            PCF8574_ADDR
-        )
-    ) {
-
-        Serial.println(
-            "Erreur : PCF8574 non détecté !"
-        );
-
-    } else {
-
-        Serial.println(
-            "PCF8574 détecté avec succès."
-        );
-    }
-
-    // =======================
-    // LORAWAN
-    // =======================
+    consoleSection("LORAWAN");
 
     initLoRa();
 }
 
-// =================================================
+// =======================
 // LOOP
-// =================================================
+// =======================
 
 void loop() {
 
-    // =======================
-    // COMMANDES CONSOLE
-    // =======================
+    loopLoRa();
 
-    if (Serial.available() > 0) {
+    unsigned long now = millis();
 
-        String commande =
-            Serial.readStringUntil('\n');
+    if (
+        now - lastSendMillis >= TX_INTERVAL ||
+        demandeEnvoiImmediate
+    ) {
 
-        commande.trim();
+        lastSendMillis = now;
+
+        demandeEnvoiImmediate = false;
 
         // =======================
-        // STATUS
+        // BME280
         // =======================
 
-        if (
-            commande == "status"
-        ) {
+        #if USE_BME280
 
-            Serial.println(
-                "[INFO] Système opérationnel."
-            );
+            meteo.temperature =
+                getBME280Temperature();
+
+            meteo.humidity =
+                getBME280Humidity();
+
+            meteo.pressure =
+                getBME280Pressure();
+
+        #endif
+
+        // =======================
+        // SHT31
+        // =======================
+
+        #if USE_SHT31
+
+            meteo.shtTemperature =
+                getSHT31Temperature();
+
+            meteo.shtHumidity =
+                getSHT31Humidity();
+
+        #endif
+
+        // =======================
+        // VENT
+        // =======================
+
+        meteo.windSpeed =
+            getWindSpeed();
+
+        meteo.windDirection =
+            getWindDirection();
+
+        // =======================
+        // PLUIE
+        // =======================
+
+        #if USE_RAIN_GAUGE
+
+            meteo.rainMM =
+                getRainMM();
+
+        #endif
+
+        // =======================
+        // CONSOLE
+        // =======================
+
+        consoleSection("METEO");
+
+        consoleData(
+            "Temperature",
+            String(meteo.temperature, 2),
+            "C"
+        );
+
+        consoleData(
+            "Humidite",
+            String(meteo.humidity, 1),
+            "%"
+        );
+
+        consoleData(
+            "Pression",
+            String(meteo.pressure, 1),
+            "hPa"
+        );
+
+        consoleData(
+            "Vent",
+            String(meteo.windSpeed, 1),
+            "km/h"
+        );
+
+        consoleData(
+            "Direction",
+            String(meteo.windDirection)
+        );
+
+        consoleData(
+            "Pluie",
+            String(meteo.rainMM, 2),
+            "mm"
+        );
+
+        // =======================
+        // ALERTE VENT
+        // =======================
+
+        if (meteo.windSpeed >= ALERTE_VENT_KMH) {
+
+            alerteVent = true;
+
+            consoleWarn("ALERTE VENT");
         }
-
-        // =======================
-        // PCF8574
-        // =======================
-
-        else if (
-            commande == "pcf8574"
-        ) {
-
-            byte valeur;
-
-            if (
-                readPCF8574(
-                    PCF8574_ADDR,
-                    valeur
-                )
-            ) {
-
-                Serial.print(
-                    "Valeur PCF8574 : "
-                );
-
-                afficheLes8bitsDeLaValeur(
-                    valeur
-                );
-
-            } else {
-
-                Serial.println(
-                    "Erreur de lecture du PCF8574."
-                );
-            }
-        }
-
-        // =======================
-        // PAYLOAD
-        // =======================
-
-        else if (
-            commande == "payload"
-        ) {
-
-            uint8_t payloadData[10];
-
-            HivePayload payload;
-
-            payload.buildPayload(
-                payloadData
-            );
-
-            Serial.println(
-                "Payload construit :"
-            );
-
-            for (
-                int i = 0;
-                i < 10;
-                i++
-            ) {
-
-                Serial.print(
-                    payloadData[i],
-                    HEX
-                );
-
-                Serial.print(" ");
-            }
-
-            Serial.println();
-        }
-
-        // =======================
-        // COMMANDE INCONNUE
-        // =======================
-
         else {
 
-            Serial.println(
-                "Commande inconnue."
-            );
+            alerteVent = false;
+        }
+
+        // =======================
+        // ENVOI TTN
+        // =======================
+
+        if (isLoRaJoined()) {
+
+            envoyerDonnees();
+        }
+        else {
+
+            consoleWarn("TTN non connecte");
         }
     }
-
-    // =======================
-    // LORAWAN
-    // =======================
-
-    loopLoRa();
 }

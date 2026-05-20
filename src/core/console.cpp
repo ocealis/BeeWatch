@@ -1,38 +1,90 @@
 #include "core/console.h"
-#include "config/pins.h"
+
+// =======================
+// HEADER
+// =======================
 
 void consoleHeader() {
 
-  Serial.println();
-  Serial.println("╔══════════════════════════════════════════════╗");
-  Serial.println("║          BEEWATCH - RUCHE CONNECTÉE          ║");
-  Serial.println("║        ESP32 + RFM95W + LoRaWAN TTN          ║");
-  Serial.println("╚══════════════════════════════════════════════╝");
+    Serial.println();
+
+    Serial.println("=================================");
+
+    Serial.println("        BEEWATCH v1.1");
+
+    Serial.println("=================================");
 }
+
+// =======================
+// SECTION
+// =======================
 
 void consoleSection(const char* titre) {
 
-  Serial.println();
-  Serial.println("──────────────────────────────────────────────");
-  Serial.print("▶ ");
-  Serial.println(titre);
-  Serial.println("──────────────────────────────────────────────");
+    Serial.println();
+
+    Serial.print("[ ");
+
+    Serial.print(titre);
+
+    Serial.println(" ]");
 }
+
+// =======================
+// OK
+// =======================
 
 void consoleOk(const char* msg) {
 
-  Serial.print("✅ ");
-  Serial.println(msg);
+    Serial.print("[OK] ");
+
+    Serial.println(msg);
 }
+
+// =======================
+// INFO
+// =======================
 
 void consoleInfo(const char* msg) {
 
-  Serial.print("ℹ️  ");
-  Serial.println(msg);
+    Serial.print("[INFO] ");
+
+    Serial.println(msg);
 }
+
+// =======================
+// WARNING
+// =======================
 
 void consoleWarn(const char* msg) {
 
-  Serial.print("⚠️  ");
-  Serial.println(msg);
+    Serial.print("[WARN] ");
+
+    Serial.println(msg);
+}
+
+// =======================
+// DATA
+// =======================
+
+void consoleData(
+    const char* label,
+    const String& value,
+    const char* unit
+) {
+
+    Serial.print(label);
+
+    Serial.print(" : ");
+
+    Serial.print(value);
+
+    if (strlen(unit) > 0) {
+
+        Serial.print(" ");
+
+        Serial.print(unit);
+    }
+
+    Serial.println();
 }

@@ -15,7 +15,7 @@ void consoleWarn(const char* msg);
 
 void consoleData(
     const char* label,
-    String value,
+    const String& value,
     const char* unit = ""
 );
 
